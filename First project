@@ -1,0 +1,68 @@
+from manim import *
+import numpy as np
+
+class SineFromUnitCircle(Scene):
+    def construct(self):
+
+        # إعداد دائرة الوحدة
+        circle = Circle(radius=2, color=BLUE)
+        circle.shift(LEFT * 3)
+        self.play(Create(circle))
+
+        # نقطة تتحرك على الدائرة
+        moving_dot = Dot(color=YELLOW)
+        moving_dot.move_to(circle.point_at_angle(0))
+        self.play(FadeIn(moving_dot))
+
+        # خط الزاوية
+        angle_line = Line(circle.get_center(), moving_dot.get_center(), color=YELLOW)
+        self.play(Create(angle_line))
+
+        # محور لتمدد دالة السينوس
+        axes = Axes(
+            x_range=[0, 2*np.pi, np.pi/2],
+            y_range=[-1.2, 1.2, 1],
+            x_length=6,
+            y_length=4,
+            tips=True
+        ).shift(RIGHT * 3)
+
+        self.play(Create(axes))
+
+        # منحنى السينوس الذي سيُرسم تدريجياً
+        sine_curve = VMobject(color=RED)
+        sine_curve.set_points_as_corners([axes.c2p(0, 0)])
+
+        self.add(sine_curve)
+
+        # نقطة تُسقط قيمة السينوس على المحور
+        graph_dot = Dot(color=RED).move_to(axes.c2p(0, 0))
+        self.add(graph_dot)
+
+        # تحديثات الأنيميشن
+        def update_motion(alpha):
+            theta = alpha * 2 * np.pi
+
+            # حركة النقطة على الدائرة
+            pos = circle.point_at_angle(theta)
+            moving_dot.move_to(pos)
+
+            # تحديث خط الزاوية
+            angle_line.become(Line(circle.get_center(), pos, color=YELLOW))
+
+            # إسقاط قيمة sin(theta)
+            x_graph = theta
+            y_graph = np.sin(theta)
+            graph_dot.move_to(axes.c2p(x_graph, y_graph))
+
+            # إضافة النقطة الجديدة للمنحنى
+            sine_curve.add_points_as_corners([axes.c2p(x_graph, y_graph)])
+
+        # تشغيل الأنيميشن كامل دورة
+        self.play(
+            UpdateFromAlphaFunc(moving_dot, update_motion),
+            run_time=6,
+            rate_func=linear
+        )
+
+        self.wait()
